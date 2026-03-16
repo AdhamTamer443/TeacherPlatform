@@ -1,0 +1,135 @@
+{% extends 'admin/base.html' %}
+{% block title %}لوحة التحكم{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.6rem;font-weight:900">لوحة التحكم</h1>
+  <span class="text-muted fs-sm">مرحباً، {{ current_user.name }}</span>
+</div>
+
+<div class="grid grid-4 mb-4">
+  <div class="stat-card">
+    <div class="stat-icon primary">👥</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats['students'] }}</div>
+      <div class="stat-lbl">طالب مسجل</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon secondary">📚</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats['grades'] }}</div>
+      <div class="stat-lbl">صف دراسي</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(232,123,117,0.15);color:var(--secondary)">📅</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats['terms'] }}</div>
+      <div class="stat-lbl">فصل دراسي</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon gold">📖</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats['units'] }}</div>
+      <div class="stat-lbl">وحدة دراسية</div>
+    </div>
+  </div>
+</div>
+<div class="grid grid-2 mb-4" style="max-width:560px">
+  <div class="stat-card">
+    <div class="stat-icon" style="background:rgba(42,200,74,0.15);color:#2ac84a">✏️</div>
+    <div class="stat-info">
+      <div class="stat-num">{{ stats['lessons'] }}</div>
+      <div class="stat-lbl">درس</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon info">💳</div>
+    <div class="stat-info">
+      <div class="stat-num text-warning">{{ stats['pending'] }}</div>
+      <div class="stat-lbl">طلب دفع معلق</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-center justify-between mb-3">
+      <h3 style="font-size:1.1rem;font-weight:700">أحدث طلبات الدفع</h3>
+      <a href="{{ url_for('admin.payments') }}" class="btn btn-outline btn-sm">عرض الكل</a>
+    </div>
+    {% if recent_requests %}
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+          <th>الطالب</th><th>الهاتف</th><th>العنصر</th><th>الباقة</th><th>المبلغ</th><th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for req in recent_requests %}
+          <tr>
+            <td>{{ req['user_name'] }}</td>
+            <td dir="ltr" style="text-align:right">{{ req['phone'] }}</td>
+            <td>
+            {% if req['item_type'] == 'unit' %}
+            <a href="{{ url_for('main.unit_detail', unit_id=req['item_id']) }}" target="_blank"
+              class="badge badge-muted" style="text-decoration:none">
+              📖 {{ req['item_title'] or 'وحدة #' ~ req['item_id'] }}
+            </a>
+            {% elif req['item_type'] == 'term' %}
+            <a href="{{ url_for('main.term_detail', grade_id=req['item_grade_id'], term_id=req['item_id']) }}" target="_blank"
+              class="badge badge-muted" style="text-decoration:none">
+              📅 {{ req['item_title'] or 'فصل #' ~ req['item_id'] }}
+            </a>
+            {% endif %}
+            </td>
+            <td>
+              {% if req['is_upgrade'] and req['target_tier'] %}
+                <span class="tier-badge tier-{{ req['tier'] }}" style="font-size:0.72rem">
+                  {% if req['tier'] == 'gold' %}🥇 ذهبي{% elif req['tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+                </span>
+                <span style="margin:0 0.2rem;font-size:0.8rem;color:var(--text-muted)">←</span>
+                <span class="tier-badge tier-{{ req['target_tier'] }}" style="font-size:0.72rem">
+                  {% if req['target_tier'] == 'gold' %}🥇 ذهبي{% elif req['target_tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+                </span>
+              {% else %}
+                <span class="tier-badge tier-{{ req['tier'] }}">
+                  {% if req['tier'] == 'gold' %}🥇 ذهبي{% elif req['tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+                </span>
+              {% endif %}
+            </td>
+            <td>{{ req['amount']|int }} ج</td>
+            <td>
+              {% if req['status'] == 'pending' %}<span class="badge badge-warning">معلق</span>
+              {% elif req['status'] == 'approved' %}<span class="badge badge-success">مقبول</span>
+              {% else %}<span class="badge badge-danger">مرفوض</span>{% endif %}
+            </td>
+            <td class="fs-sm text-muted">{{ req['created_at'] }}</td>
+            <td>
+              {% if req['status'] == 'pending' %}
+              <div class="d-flex gap-1">
+                <form method="POST" action="{{ url_for('admin.payment_approve', rid=req['id']) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm" style="background:var(--success);color:#fff" type="submit">✓</button>
+                </form>
+                <form method="POST" action="{{ url_for('admin.payment_reject', rid=req['id']) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-danger btn-sm" type="submit">✗</button>
+                </form>
+              </div>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="text-muted text-center" style="padding:2rem 0">لا توجد طلبات حديثة</p>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

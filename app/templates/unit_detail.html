@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}{{ unit['title'] }} — خادم الفصحى{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{{ url_for('main.index') }}">الرئيسية</a>
+      <span>›</span>
+      <a href="{{ url_for('main.grade_detail', grade_id=unit['grade_id']) }}">{{ unit['grade_title'] }}</a>
+      {% if unit['term_id'] %}
+      <span>›</span>
+      <a href="{{ url_for('main.term_detail', grade_id=unit['grade_id'], term_id=unit['term_id']) }}">{{ unit['term_title'] }}</a>
+      {% endif %}
+      <span>›</span>
+      <span>{{ unit['title'] }}</span>
+    </div>
+    <div class="d-flex align-center justify-between" style="flex-wrap:wrap;gap:1rem">
+      <div>
+        <h1>{{ unit['title'] }}</h1>
+        {% if unit['description'] %}<p>{{ unit['description'] }}</p>{% endif %}
+      </div>
+      {% if access_tier %}
+        <span class="tier-badge tier-{{ access_tier }}" style="font-size:1rem;padding:0.4rem 1rem">
+          {% if access_tier == 'gold' %}🥇 ذهبي{% elif access_tier == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+        </span>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="section-sm">
+  <div class="container">
+    <div class="unit-layout">
+
+      <div>
+        <h2 class="mb-3" style="font-size:1.2rem">دروس الوحدة ({{ lessons|length }} درس)</h2>
+        {% if lessons %}
+          {% for lesson in lessons %}
+          {% set is_accessible = access_tier or current_user.is_admin if current_user.is_authenticated else false %}
+
+          <a href="{{ url_for('main.lesson', lesson_id=lesson['id']) if is_accessible else '#' }}"
+             class="lesson-item {% if not is_accessible %}locked{% endif %}"
+             style="text-decoration:none">
+            <div class="lesson-num">{{ loop.index }}</div>
+            <div class="lesson-info">
+              <div class="title">{{ lesson['title'] }}</div>
+              <div class="duration">
+                {% if lesson['duration_minutes'] %}{{ lesson['duration_minutes'] }} دقيقة{% endif %}
+              </div>
+            </div>
+            {% if not is_accessible %}<span style="font-size:0.8rem;color:var(--text-muted)">🔒</span>{% endif %}
+          </a>
+          {% endfor %}
+        {% else %}
+          <p class="text-muted">لا توجد دروس بعد</p>
+        {% endif %}
+      </div>
+
+      <div>
+        {% if access_tier %}
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title">وصولك الحالي</h3>
+              <div class="tier-badge tier-{{ access_tier }} mt-1 mb-3" style="font-size:1rem">
+                {% if access_tier == 'gold' %}🥇 ذهبي — فيديو + تمارين + ملخص
+                {% elif access_tier == 'silver' %}🥈 فضي — فيديو + تمارين
+                {% else %}🥉 برونز — فيديو فقط{% endif %}
+              </div>
+              {% if lessons %}
+              <a href="{{ url_for('main.lesson', lesson_id=lessons[0]['id']) }}" class="btn btn-primary btn-block">
+                ابدأ المشاهدة ▶
+              </a>
+              {% endif %}
+            </div>
+          </div>
+        {% else %}
+          <div class="card">
+            <div class="card-body">
+              <h3 class="card-title mb-3">اشتري هذه الوحدة</h3>
+              <div class="tier-pricing" style="grid-template-columns:1fr">
+                {% if unit['bronze_price'] > 0 %}
+                <div class="tier-card bronze-card" style="text-align:right;padding:1rem">
+                  <div class="d-flex align-center justify-between">
+                    <span class="tier-badge tier-bronze">🥉 برونز</span>
+                    <strong style="color:var(--bronze)">{{ unit['bronze_price']|int }} ج</strong>
+                  </div>
+                  <p class="fs-sm text-muted mt-1">فيديو فقط</p>
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=unit['id'], tier='bronze') }}"
+                     class="btn btn-bronze btn-sm btn-block mt-1">اشتري</a>
+                </div>
+                {% endif %}
+                {% if unit['silver_price'] > 0 %}
+                <div class="tier-card silver-card" style="text-align:right;padding:1rem">
+                  <div class="d-flex align-center justify-between">
+                    <span class="tier-badge tier-silver">🥈 فضي</span>
+                    <strong style="color:var(--silver)">{{ unit['silver_price']|int }} ج</strong>
+                  </div>
+                  <p class="fs-sm text-muted mt-1">فيديو + تمارين</p>
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=unit['id'], tier='silver') }}"
+                     class="btn btn-silver btn-sm btn-block mt-1">اشتري</a>
+                </div>
+                {% endif %}
+                {% if unit['gold_price'] > 0 %}
+                <div class="tier-card gold-card" style="text-align:right;padding:1rem">
+                  <div class="d-flex align-center justify-between">
+                    <span class="tier-badge tier-gold">🥇 ذهبي</span>
+                    <strong style="color:var(--gold)">{{ unit['gold_price']|int }} ج</strong>
+                  </div>
+                  <p class="fs-sm text-muted mt-1">فيديو + تمارين + ملخص</p>
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=unit['id'], tier='gold') }}"
+                     class="btn btn-gold btn-sm btn-block mt-1">اشتري</a>
+                </div>
+                {% endif %}
+              </div>
+
+              {% if unit['term_id'] %}
+              <div class="divider"></div>
+              <div style="background:rgba(244,200,66,0.08);border:1px solid rgba(244,200,66,0.2);border-radius:10px;padding:0.9rem;text-align:center">
+                <p style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.5rem">💡 وفّر أكثر</p>
+                <a href="{{ url_for('main.term_detail', grade_id=unit['grade_id'], term_id=unit['term_id']) }}"
+                   style="font-size:0.85rem;color:var(--gold);font-weight:700;text-decoration:none">
+                  اشتري الفصل كاملاً بسعر أفضل ←
+                </a>
+              </div>
+              {% endif %}
+
+              {% if not current_user.is_authenticated %}
+              <div class="divider"></div>
+              <p class="text-muted fs-sm text-center">يجب تسجيل الدخول أولاً</p>
+              <a href="{{ url_for('auth.login') }}" class="btn btn-outline btn-block btn-sm">تسجيل الدخول</a>
+              {% endif %}
+            </div>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

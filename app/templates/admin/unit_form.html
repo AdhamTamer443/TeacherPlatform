@@ -1,0 +1,141 @@
+{% extends 'admin/base.html' %}
+{% block title %}{% if action == 'create' %}إضافة وحدة{% else %}تعديل وحدة{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.4rem;font-weight:900">
+    {% if action == 'create' %}➕ إضافة وحدة دراسية{% else %}✏️ تعديل: {{ unit['title'] }}{% endif %}
+  </h1>
+  <a href="{{ url_for('admin.units') }}" class="btn btn-outline">← رجوع</a>
+</div>
+
+<div style="display:grid;grid-template-columns:2fr 1fr;gap:1.5rem">
+  <div class="card">
+    <div class="card-body">
+      <form method="POST" enctype="multipart/form-data" id="main-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="form-group">
+          <label class="form-label">الصف الدراسي <span style="color:var(--danger)">*</span></label>
+          <select name="grade_id" id="grade-select" class="form-control" required>
+            <option value="">اختر الصف</option>
+            {% for grade in grades %}
+            <option value="{{ grade['id'] }}"
+              {% if unit and unit['grade_id'] == grade['id'] %}selected{% endif %}>
+              {{ grade['title'] }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">الفصل الدراسي</label>
+          <select name="term_id" id="term-select" class="form-control">
+            <option value="">— بدون فصل —</option>
+            {% for term in all_terms %}
+            <option value="{{ term['id'] }}"
+                    data-grade="{{ term['grade_id'] }}"
+                    {% if unit and unit['term_id'] == term['id'] %}selected{% endif %}>
+              {{ term['title'] }}
+            </option>
+            {% endfor %}
+          </select>
+          <div class="form-hint">اختر الصف أولاً لتصفية الفصول</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">اسم الوحدة <span style="color:var(--danger)">*</span></label>
+          <input type="text" name="title" class="form-control"
+                 value="{{ unit['title'] if unit else '' }}" required />
+        </div>
+        <div class="form-group">
+          <label class="form-label">الوصف</label>
+          <textarea name="description" class="form-control">{{ unit['description'] if unit else '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">ترتيب العرض</label>
+          <input type="number" name="order_index" class="form-control"
+                 value="{{ unit['order_index'] if unit else 0 }}" min="0" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">صورة الوحدة</label>
+          {% if unit and unit['thumbnail'] %}
+          <img src="{{ url_for('static', filename='uploads/' + unit['thumbnail']) }}"
+               style="max-height:80px;border-radius:var(--radius);margin-bottom:0.5rem;display:block" />
+          {% endif %}
+          <div class="upload-area">
+            <input type="file" name="thumbnail" accept="image/*" />
+            <div class="upload-icon">🖼️</div>
+            <div class="upload-text"><strong>اختر صورة</strong></div>
+          </div>
+        </div>
+        <div class="d-flex gap-2 mt-4">
+          <button type="submit" class="btn btn-primary btn-lg">
+            {% if action == 'create' %}إضافة الوحدة{% else %}حفظ التعديلات{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="card" style="height:fit-content">
+    <div class="card-body">
+      <h3 style="font-size:1rem;font-weight:700;margin-bottom:1.25rem">💰 أسعار الوحدة</h3>
+      <div class="form-group">
+        <label class="form-label"><span class="tier-badge tier-bronze">🥉 برونز</span></label>
+        <div class="input-group">
+          <input type="number" name="bronze_price" form="main-form" class="form-control"
+                 value="{{ unit['bronze_price'] if unit else 0 }}" min="0" step="0.5" />
+          <span class="input-group-text">ج</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="tier-badge tier-silver">🥈 فضي</span></label>
+        <div class="input-group">
+          <input type="number" name="silver_price" form="main-form" class="form-control"
+                 value="{{ unit['silver_price'] if unit else 0 }}" min="0" step="0.5" />
+          <span class="input-group-text">ج</span>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label"><span class="tier-badge tier-gold">🥇 ذهبي</span></label>
+        <div class="input-group">
+          <input type="number" name="gold_price" form="main-form" class="form-control"
+                 value="{{ unit['gold_price'] if unit else 0 }}" min="0" step="0.5" />
+          <span class="input-group-text">ج</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Cascading: filter terms by selected grade
+const allTermOptions = Array.from(document.querySelectorAll('#term-select option[data-grade]'));
+const currentTermId = "{{ unit['term_id'] if unit and unit['term_id'] else '' }}";
+
+function filterTerms(gradeId) {
+  const termSelect = document.getElementById('term-select');
+  // reset
+  termSelect.innerHTML = '<option value="">— بدون فصل —</option>';
+  if (!gradeId) return;
+  allTermOptions
+    .filter(opt => opt.dataset.grade === String(gradeId))
+    .forEach(opt => {
+      const newOpt = opt.cloneNode(true);
+      if (String(newOpt.value) === String(currentTermId)) newOpt.selected = true;
+      termSelect.appendChild(newOpt);
+    });
+}
+
+const gradeSelect = document.getElementById('grade-select');
+// On load: filter for currently selected grade
+filterTerms(gradeSelect.value);
+
+gradeSelect.addEventListener('change', function() {
+  filterTerms(this.value);
+});
+</script>
+{% endblock %}

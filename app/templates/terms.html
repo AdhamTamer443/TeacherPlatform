@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}{{ grade['title'] }} — خادم الفصحى{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{{ url_for('main.index') }}">الرئيسية</a>
+      <span>›</span>
+      <a href="{{ url_for('main.grades') }}">الصفوف الدراسية</a>
+      <span>›</span>
+      <span>{{ grade['title'] }}</span>
+    </div>
+    <h1>{{ grade['title'] }}</h1>
+    {% if grade['description'] %}<p>{{ grade['description'] }}</p>{% endif %}
+  </div>
+</div>
+
+<div class="section-sm">
+  <div class="container">
+
+    {% if terms %}
+
+    <!-- Terms grid -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.75rem">
+      {% for term in terms %}
+      {% set stats = term_stats[term['id']] %}
+      {% set access = term_access.get(term['id']) %}
+
+      <div class="card" style="position:relative;overflow:visible">
+
+        <!-- Already purchased badge -->
+        {% if access %}
+        <div style="position:absolute;top:-10px;left:1rem;z-index:2">
+          <span class="tier-badge tier-{{ access }}" style="font-size:0.8rem;padding:0.3rem 0.85rem;box-shadow:0 2px 8px rgba(0,0,0,0.3)">
+            {% if access == 'gold' %}🥇 ذهبي{% elif access == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+            — مشترك
+          </span>
+        </div>
+        {% endif %}
+
+        <div class="card-body" style="padding:1.5rem">
+
+          <!-- Term header -->
+          <div style="display:flex;align-items:flex-start;gap:1rem;margin-bottom:1.25rem">
+            <div style="width:52px;height:52px;border-radius:12px;background:linear-gradient(135deg,var(--primary),var(--secondary));display:flex;align-items:center;justify-content:center;font-size:1.5rem;flex-shrink:0">
+              {% if loop.index == 1 %}📘{% elif loop.index == 2 %}📗{% else %}📙{% endif %}
+            </div>
+            <div>
+              <h3 style="font-size:1.15rem;font-weight:800;margin-bottom:0.3rem">{{ term['title'] }}</h3>
+              {% if term['description'] %}
+              <p style="color:var(--text-muted);font-size:0.88rem;line-height:1.6">{{ term['description'] }}</p>
+              {% endif %}
+            </div>
+          </div>
+
+          <!-- Stats row -->
+          <div style="display:flex;gap:1.5rem;padding:0.85rem 1rem;background:var(--bg-card2);border-radius:10px;margin-bottom:1.25rem">
+            <div style="text-align:center">
+              <div style="font-size:1.3rem;font-weight:900;color:var(--primary)">{{ stats['units'] }}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted)">وحدة دراسية</div>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div style="text-align:center">
+              <div style="font-size:1.3rem;font-weight:900;color:var(--secondary)">{{ stats['lessons'] }}</div>
+              <div style="font-size:0.78rem;color:var(--text-muted)">درس</div>
+            </div>
+            <div style="width:1px;background:var(--border)"></div>
+            <div style="text-align:center;flex:1">
+              <div style="font-size:0.78rem;color:var(--text-muted);margin-bottom:0.2rem">اشتري الفصل كاملاً</div>
+              <div style="font-size:0.82rem;font-weight:700;color:var(--gold)">وفّر أكثر 💰</div>
+            </div>
+          </div>
+
+          <!-- Term pricing (buy whole term) -->
+          {% if term['bronze_price'] > 0 or term['silver_price'] > 0 or term['gold_price'] > 0 %}
+          <div style="margin-bottom:1.25rem">
+            <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.65rem;font-weight:600">💳 اشتري الفصل كاملاً ({{ stats['units'] }} وحدة):</div>
+            <div style="display:flex;gap:0.5rem;flex-wrap:wrap">
+              {% if term['bronze_price'] > 0 %}
+              {% if not access %}
+              <a href="{{ url_for('payment.checkout', item_type='term', item_id=term['id'], tier='bronze') }}"
+                 class="btn btn-bronze btn-sm" style="flex:1;min-width:80px;text-align:center;font-size:0.82rem">
+                🥉 {{ term['bronze_price']|int }} ج
+              </a>
+              {% endif %}
+              {% endif %}
+              {% if term['silver_price'] > 0 %}
+              {% if not access or access == 'bronze' %}
+              <a href="{{ url_for('payment.checkout', item_type='term', item_id=term['id'], tier='silver') }}"
+                 class="btn btn-silver btn-sm" style="flex:1;min-width:80px;text-align:center;font-size:0.82rem">
+                🥈 {{ term['silver_price']|int }} ج
+              </a>
+              {% endif %}
+              {% endif %}
+              {% if term['gold_price'] > 0 %}
+              {% if not access or access in ('bronze', 'silver') %}
+              <a href="{{ url_for('payment.checkout', item_type='term', item_id=term['id'], tier='gold') }}"
+                 class="btn btn-gold btn-sm" style="flex:1;min-width:80px;text-align:center;font-size:0.82rem;position:relative">
+                🥇 {{ term['gold_price']|int }} ج
+              </a>
+              {% endif %}
+              {% endif %}
+              {% if access == 'gold' %}
+              <span style="color:var(--success);font-size:0.85rem;font-weight:600;align-self:center">✅ لديك الباقة الكاملة</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endif %}
+
+          <!-- CTA -->
+          <a href="{{ url_for('main.term_detail', grade_id=grade['id'], term_id=term['id']) }}"
+             class="btn {% if access %}btn-primary{% else %}btn-outline{% endif %} btn-block">
+            {% if access %}
+              ▶ متابعة الدراسة
+            {% else %}
+              عرض الوحدات
+            {% endif %}
+          </a>
+
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center" style="padding:5rem 0">
+      <div style="font-size:4rem;margin-bottom:1rem">📚</div>
+      <h2 style="color:var(--text-muted)">لا توجد فصول دراسية بعد</h2>
+      <p style="color:var(--text-muted)">سيتم إضافة المحتوى قريباً</p>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+{% endblock %}

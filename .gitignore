@@ -1,0 +1,16 @@
+# Secret key and environment variables
+.env
+
+# Database (real student data)
+teacher.db
+
+# Python bytecode (auto-generated, not source code)
+__pycache__/
+*.pyc
+
+# Student payment screenshots (personal data)
+app/static/uploads/screenshots/
+
+# OS junk
+.DS_Store
+Thumbs.db

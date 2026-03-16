@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title %}خادم الفصحى — تعلم اللغة العربية{% endblock %}
+{% block description%}منصة شاملة لتعلم اللغة العربية بطريقة فعالة وتمكين الطالب من التفوق. دروس مرئية، تمارين تفاعلية، وملخصات احترافية.{% endblock %}
+{% block content %}
+
+<section class="hero">
+  <div class="container">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <h1 class="hero-title">
+          خادم الفصحى
+          <span>تعلّم العربية بثقة</span>
+        </h1>
+        <p class="hero-desc">
+          منصة شاملة لتعلم اللغة العربية بطريقة فعالة وتمكين الطالب من التفوق. دروس مرئية، تمارين تفاعلية، وملخصات احترافية.
+        </p>
+        <div class="hero-actions">
+          <a href="{{ url_for('main.grades') }}" class="btn btn-primary btn-lg">مشاهدة الكورسات</a>
+          <a href="{{ url_for('auth.signup') }}" class="btn btn-outline btn-lg">إنشاء حساب مجاني</a>
+        </div>
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-number">{{ experience_years }}+</div>
+            <div class="stat-label">سنوات خبرة</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number">{{ grades|length }}</div>
+            <div class="stat-label">صف دراسي</div>
+          </div>
+
+        </div>
+      </div>
+      <div class="hero-image">
+        <div class="hero-avatar-placeholder"><img src="../static/mrgamal.WebP" alt="صورة الأستاذ جمال السيد" class="hero-avatar-placeholder"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section-sm" style="background:var(--bg-card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="container">
+    <div class="section-header">
+      <h2>لماذا المنصة ؟</h2>
+      <div class="section-divider"></div>
+    </div>
+    <div class="grid grid-3">
+      <div class="feature-card">
+        <div class="feature-icon">✅</div>
+        <h3>تابع تقدمك بنفسك</h3>
+        <p>نظام متابعة ذكي يتيح لك معرفة مستواك وتقدمك في كل وحدة دراسية</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔄</div>
+        <h3>راجع درسك أكثر من مرة</h3>
+        <p>إمكانية مشاهدة الدروس غير محدودة في أي وقت ومن أي مكان</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⏰</div>
+        <h3>وفر وقت المواصلات</h3>
+        <p>تعلّم من منزلك بالراحة التامة دون الحاجة للانتقال</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% if grades %}
+<section class="section">
+  <div class="container">
+    <div class="section-header">
+      <h2>السنوات الدراسية</h2>
+      <p>اختر صفك الدراسي وابدأ رحلتك التعليمية</p>
+      <div class="section-divider"></div>
+    </div>
+    <div class="grid grid-auto">
+      {% for grade in grades %}
+      <a href="{{ url_for('main.grade_detail', grade_id=grade['id']) }}" class="card card-course" style="text-decoration:none">
+        <div class="card-thumb">
+          {% if grade['image'] %}
+            <img src="{{ url_for('static', filename='uploads/' + grade['image']) }}" alt="{{ grade['title'] }}" />
+          {% else %}
+            <div class="card-thumb-placeholder">📚</div>
+          {% endif %}
+          <div class="card-thumb-overlay"><div class="play-icon">▶</div></div>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ grade['title'] }}</h3>
+          {% if grade['description'] %}
+            <p class="card-text">{{ grade['description'] }}</p>
+          {% endif %}
+          <div class="mt-2 d-flex align-center justify-between">
+            <span class="text-muted fs-sm">{{ term_counts[grade['id']] }} فصل دراسي</span>
+            <span class="text-primary fs-sm">عرض الوحدات ←</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="text-center mt-4">
+      <a href="{{ url_for('main.grades') }}" class="btn btn-outline btn-lg">عرض جميع الصفوف</a>
+    </div>
+  </div>
+</section>
+{% endif %}
+
+
+<section class="section">
+  <div class="container container-md">
+    <div class="grid grid-2" style="align-items:center;gap:3rem">
+      <div>
+        <h2 style="font-size:2rem;font-weight:900;margin-bottom:1rem">نبذة عن خادم الفصحى</h2>
+        <p style="color:var(--text-muted);line-height:1.9;margin-bottom:1.5rem">
+          الأستاذ جمال السيد. تخرج من كلية الآداب / اللغة العربية بجامعة سوهاج.
+          وهو أول من لقّب بخادم الفصحى، حيث كرّس نصف حياته ليتعلمها والنصف الآخر ليُعلمها.
+        </p>
+        <div class="grid grid-2" style="gap:1rem">
+          <div class="stat-card">
+            <div class="stat-icon primary">🎓</div>
+            <div class="stat-info">
+              <div class="stat-num">{{ experience_years }}</div>
+              <div class="stat-lbl">سنوات الخبرة</div>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon secondary">📹</div>
+            <div class="stat-info">
+              <div class="stat-num">+8.5</div>
+              <div class="stat-lbl">ألف درس معلَم</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg-card);border:2px dashed var(--border);border-radius:var(--radius-lg);padding:3rem;text-align:center;aspect-ratio:3/4;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem">
+        <div style="font-size:4rem">👨‍🏫</div>
+        <p style="color:var(--text-muted);font-size:0.9rem">صورة الأستاذ هنا</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% endblock %}

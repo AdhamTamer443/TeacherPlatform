@@ -1,0 +1,60 @@
+{% extends 'admin/base.html' %}
+{% block title %}إدارة الصفوف{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.4rem;font-weight:900">📚 إدارة الصفوف الدراسية</h1>
+  <a href="{{ url_for('admin.grade_create') }}" class="btn btn-primary">+ إضافة صف</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if grades %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>الصورة</th><th>الاسم</th><th>الوصف</th><th>الفصول</th><th>الترتيب</th><th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grade in grades %}
+        <tr>
+          <td>{{ grade['id'] }}</td>
+          <td>
+            {% if grade['image'] %}
+            <img src="{{ url_for('static', filename='uploads/' + grade['image']) }}" style="width:48px;height:36px;object-fit:cover;border-radius:6px" />
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td><strong>{{ grade['title'] }}</strong></td>
+          <td class="text-muted fs-sm" style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            {{ grade['description'] or '—' }}
+          </td>
+          <td>
+            <a href="{{ url_for('admin.terms', gid=grade['id']) }}" class="badge badge-info" style="text-decoration:none">
+              {{ term_counts[grade['id']] }} فصل
+            </a>
+          </td>
+          <td>{{ grade['order_index'] }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('admin.terms', gid=grade['id']) }}" class="btn btn-outline btn-sm">📅 الفصول</a>
+              <a href="{{ url_for('admin.grade_edit', gid=grade['id']) }}" class="btn btn-outline btn-sm">✏️</a>
+              <form method="POST" action="{{ url_for('admin.grade_delete', gid=grade['id']) }}" onsubmit="return confirm('هل تريد حذف هذا الصف وجميع فصوله ووحداته؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger btn-sm" type="submit">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center" style="padding:3rem">
+      <p class="text-muted">لا توجد صفوف بعد</p>
+      <a href="{{ url_for('admin.grade_create') }}" class="btn btn-primary mt-2">إضافة أول صف</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

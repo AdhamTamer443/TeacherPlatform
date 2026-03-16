@@ -1,0 +1,51 @@
+{% extends 'admin/base.html' %}
+{% block title %}إدارة الطلاب{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.4rem;font-weight:900">👥 الطلاب ({{ students|length }})</h1>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if students %}
+    <table>
+      <thead>
+        <tr>
+          <th>الاسم</th><th>الهاتف</th><th>البريد</th><th>الحالة</th><th>تاريخ التسجيل</th><th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for student in students %}
+        <tr>
+          <td><strong>{{ student['name'] }}</strong></td>
+          <td dir="ltr" style="text-align:right">{{ student['phone'] }}</td>
+          <td dir="ltr" style="text-align:right;font-size:0.85rem">{{ student['email'] }}</td>
+          <td>
+            {% if student['is_active'] %}
+            <span class="badge badge-success">نشط</span>
+            {% else %}
+            <span class="badge badge-danger">موقوف</span>
+            {% endif %}
+          </td>
+          <td class="fs-sm text-muted">{{ student['created_at'] }}</td>
+          <td>
+            <form method="POST" action="{{ url_for('admin.student_toggle', uid=student['id']) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button class="btn btn-outline btn-sm" type="submit">
+                {% if student['is_active'] %}🔒 إيقاف{% else %}✓ تفعيل{% endif %}
+              </button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center" style="padding:3rem">
+      <p class="text-muted">لا يوجد طلاب مسجلون بعد</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

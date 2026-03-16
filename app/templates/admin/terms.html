@@ -1,0 +1,87 @@
+{% extends 'admin/base.html' %}
+{% block title %}فصول {{ grade['title'] }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <div>
+    <div class="breadcrumb" style="margin-bottom:0.5rem">
+      <a href="{{ url_for('admin.grades') }}">الصفوف</a>
+      <span>›</span>
+      <span>{{ grade['title'] }}</span>
+    </div>
+    <h1 style="font-size:1.4rem;font-weight:900">📅 الفصول الدراسية — {{ grade['title'] }}</h1>
+  </div>
+  <a href="{{ url_for('admin.term_create', gid=grade['id']) }}" class="btn btn-primary">+ إضافة فصل</a>
+</div>
+
+{% if terms %}
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:1.25rem">
+  {% for term in terms %}
+  <div class="card">
+    <div class="card-body">
+
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem">
+        <div>
+          <h3 style="font-size:1.05rem;font-weight:800;margin-bottom:0.25rem">{{ term['title'] }}</h3>
+          {% if term['description'] %}
+          <p style="font-size:0.85rem;color:var(--text-muted)">{{ term['description'] }}</p>
+          {% endif %}
+        </div>
+        <div class="d-flex gap-1">
+          <a href="{{ url_for('admin.term_edit', gid=grade['id'], tid=term['id']) }}" class="btn btn-outline btn-sm">✏️</a>
+          <form method="POST" action="{{ url_for('admin.term_delete', gid=grade['id'], tid=term['id']) }}"
+                onsubmit="return confirm('حذف هذا الفصل وجميع وحداته؟')">
+            <button class="btn btn-danger btn-sm">🗑️</button>
+          </form>
+        </div>
+      </div>
+
+      <!-- Stats -->
+      <div style="display:flex;gap:1rem;margin-bottom:1rem">
+        <div style="background:var(--bg-card2);border-radius:8px;padding:0.5rem 0.85rem;text-align:center">
+          <div style="font-weight:900;color:var(--primary)">{{ unit_counts[term['id']] }}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">وحدة</div>
+        </div>
+        <div style="background:var(--bg-card2);border-radius:8px;padding:0.5rem 0.85rem;text-align:center">
+          <div style="font-weight:900;color:var(--secondary)">{{ term['order_index'] }}</div>
+          <div style="font-size:0.75rem;color:var(--text-muted)">ترتيب</div>
+        </div>
+      </div>
+
+      <!-- Prices -->
+      <div style="display:flex;gap:0.4rem;flex-wrap:wrap;margin-bottom:1rem">
+        {% if term['bronze_price'] > 0 %}
+        <span class="tier-badge tier-bronze" style="font-size:0.75rem">🥉 {{ term['bronze_price']|int }} ج</span>
+        {% endif %}
+        {% if term['silver_price'] > 0 %}
+        <span class="tier-badge tier-silver" style="font-size:0.75rem">🥈 {{ term['silver_price']|int }} ج</span>
+        {% endif %}
+        {% if term['gold_price'] > 0 %}
+        <span class="tier-badge tier-gold" style="font-size:0.75rem">🥇 {{ term['gold_price']|int }} ج</span>
+        {% endif %}
+        {% if term['bronze_price'] == 0 and term['silver_price'] == 0 and term['gold_price'] == 0 %}
+        <span style="font-size:0.8rem;color:var(--text-muted)">لم تُحدَّد أسعار بعد</span>
+        {% endif %}
+      </div>
+
+      <!-- Actions -->
+      <a href="{{ url_for('admin.units') }}?term={{ term['id'] }}" class="btn btn-outline btn-sm btn-block">
+        📖 إدارة وحدات هذا الفصل
+      </a>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="card">
+  <div class="card-body text-center" style="padding:3rem">
+    <div style="font-size:3rem;margin-bottom:1rem">📅</div>
+    <h3 style="margin-bottom:0.5rem">لا توجد فصول بعد</h3>
+    <p class="text-muted mb-3">أضف فصلاً دراسياً لتنظيم الوحدات</p>
+    <a href="{{ url_for('admin.term_create', gid=grade['id']) }}" class="btn btn-primary">إضافة أول فصل</a>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}

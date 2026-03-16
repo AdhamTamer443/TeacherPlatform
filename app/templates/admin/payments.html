@@ -1,0 +1,115 @@
+{% extends 'admin/base.html' %}
+{% block title %}طلبات الدفع{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.4rem;font-weight:900">💳 طلبات الدفع</h1>
+</div>
+
+<div class="d-flex gap-1 mb-3">
+  <a href="{{ url_for('admin.payments', status='pending') }}" class="btn btn-sm {% if status == 'pending' %}btn-primary{% else %}btn-outline{% endif %}">معلقة</a>
+  <a href="{{ url_for('admin.payments', status='approved') }}" class="btn btn-sm {% if status == 'approved' %}btn-primary{% else %}btn-outline{% endif %}">مقبولة</a>
+  <a href="{{ url_for('admin.payments', status='rejected') }}" class="btn btn-sm {% if status == 'rejected' %}btn-primary{% else %}btn-outline{% endif %}">مرفوضة</a>
+  <a href="{{ url_for('admin.payments', status='all') }}" class="btn btn-sm {% if status == 'all' %}btn-primary{% else %}btn-outline{% endif %}">الكل</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if requests %}
+    <table>
+      <thead>
+        <tr>
+          <th>الطالب</th><th>النوع</th><th>الباقة</th><th>المبلغ</th><th>الإيصال</th><th>الحالة</th><th>التاريخ</th><th>الإجراء</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for req in requests %}
+        <tr>
+          <td>
+            <div style="font-weight:600">{{ req['user_name'] }}</div>
+            <div class="fs-sm text-muted">{{ req['phone'] }}</div>
+          </td>
+          <td>
+            {% if req['item_type'] == 'unit' %}
+            <a href="{{ url_for('main.unit_detail', unit_id=req['item_id']) }}" target="_blank"
+              class="badge badge-muted" style="text-decoration:none">
+              📖 {{ req['item_title'] or 'وحدة #' ~ req['item_id'] }}
+            </a>
+            {% elif req['item_type'] == 'term' %}
+            <a href="{{ url_for('main.term_detail', grade_id=req['item_grade_id'], term_id=req['item_id']) }}" target="_blank"
+              class="badge badge-muted" style="text-decoration:none">
+              📅 {{ req['item_title'] or 'فصل #' ~ req['item_id'] }}
+            </a>
+            {% endif %}
+          </td>
+          <td>
+            {% if req['is_upgrade'] and req['target_tier'] %}
+              <span class="tier-badge tier-{{ req['tier'] }}" style="font-size:0.72rem">
+                {% if req['tier'] == 'gold' %}🥇 ذهبي{% elif req['tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+              </span>
+              <span style="margin:0 0.2rem;font-size:0.8rem;color:var(--text-muted)">←</span>
+              <span class="tier-badge tier-{{ req['target_tier'] }}" style="font-size:0.72rem">
+                {% if req['target_tier'] == 'gold' %}🥇 ذهبي{% elif req['target_tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+              </span>
+            {% else %}
+              <span class="tier-badge tier-{{ req['tier'] }}">
+                {% if req['tier'] == 'gold' %}🥇 ذهبي{% elif req['tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+              </span>
+            {% endif %}
+          </td>
+          <td><strong>{{ req['amount']|int }} ج</strong></td>
+          <td>
+            {% if req['screenshot_path'] %}
+            <a href="{{ url_for('static', filename='uploads/screenshots/' + req['screenshot_path']) }}" target="_blank" class="btn btn-outline btn-sm">🖼️ عرض</a>
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td>
+            {% if req['status'] == 'pending' %}<span class="badge badge-warning">معلق</span>
+            {% elif req['status'] == 'approved' %}<span class="badge badge-success">مقبول</span>
+            {% else %}<span class="badge badge-danger">مرفوض</span>{% endif %}
+          </td>
+          <td class="fs-sm text-muted">{{ req['created_at'] }}</td>
+          <td>
+            {% if req['status'] == 'pending' %}
+            <div class="d-flex gap-1">
+              <form method="POST" action="{{ url_for('admin.payment_approve', rid=req['id']) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-sm" style="background:var(--success);color:#fff" type="submit">✓ قبول</button>
+              </form>
+              <button class="btn btn-danger btn-sm" data-modal="reject-{{ req['id'] }}">✗ رفض</button>
+            </div>
+
+            <div id="reject-{{ req['id'] }}" class="modal-overlay">
+              <div class="modal">
+                <div class="modal-header">
+                  <h3>رفض طلب الدفع</h3>
+                  <button data-close-modal class="btn btn-ghost btn-sm">×</button>
+                </div>
+                <form method="POST" action="{{ url_for('admin.payment_reject', rid=req['id']) }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="modal-body">
+                    <p class="text-muted mb-2">سبب الرفض (اختياري)</p>
+                    <textarea name="note" class="form-control" placeholder="اكتب سبب الرفض..."></textarea>
+                  </div>
+                  <div class="modal-footer">
+                    <button type="button" data-close-modal class="btn btn-outline">إلغاء</button>
+                    <button type="submit" class="btn btn-danger">رفض الطلب</button>
+                  </div>
+                </form>
+              </div>
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center" style="padding:3rem">
+      <div style="font-size:3rem;margin-bottom:1rem">💳</div>
+      <p class="text-muted">لا توجد طلبات</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

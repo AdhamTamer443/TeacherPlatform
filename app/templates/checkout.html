@@ -1,0 +1,153 @@
+{% extends 'base.html' %}
+{% block title %}الدفع — خادم الفصحى{% endblock %}
+
+{% block content %}
+<div class="section-sm">
+  <div class="container container-sm">
+    <div class="page-header" style="padding:2rem 0 1.5rem">
+      <h1>{% if is_upgrade %}ترقية الباقة{% else %}إتمام الشراء{% endif %}</h1>
+      <p>
+        {% if item_type == 'term' %}
+          <span class="badge badge-info" style="font-size:0.85rem">🎓 فصل دراسي كامل</span>
+          {{ item['title'] }}
+          {% if term_unit_count %}
+          <span style="color:var(--text-muted);font-size:0.9rem"> — {{ term_unit_count }} وحدة</span>
+          {% endif %}
+        {% else %}
+          {{ item['title'] }}
+        {% endif %}
+        {% if is_upgrade %}
+        <span style="color:var(--text-muted);font-size:0.9rem"> — ترقية من
+          {% if current_tier == 'bronze' %}🥉 برونز{% else %}🥈 فضي{% endif %}
+          إلى
+          {% if tier == 'gold' %}🥇 ذهبي{% else %}🥈 فضي{% endif %}
+        </span>
+        {% endif %}
+      </p>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        {% if is_upgrade %}
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">تفاصيل الترقية</h3>
+        <div style="background:var(--bg-card2);border-radius:var(--radius);padding:1.25rem">
+          <div style="display:flex;align-items:center;gap:1rem;flex-wrap:wrap;justify-content:center">
+            <div style="text-align:center">
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.3rem">باقتك الحالية</div>
+              {% if current_tier == 'bronze' %}<span class="tier-badge tier-bronze" style="font-size:1rem">🥉 برونز</span>
+              {% else %}<span class="tier-badge tier-silver" style="font-size:1rem">🥈 فضي</span>{% endif %}
+            </div>
+            <div style="font-size:1.5rem;color:var(--primary)">→</div>
+            <div style="text-align:center">
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.3rem">الباقة الجديدة</div>
+              {% if tier == 'gold' %}<span class="tier-badge tier-gold" style="font-size:1rem">🥇 ذهبي</span>
+              {% else %}<span class="tier-badge tier-silver" style="font-size:1rem">🥈 فضي</span>{% endif %}
+            </div>
+            <div style="text-align:center">
+              <div style="font-size:0.82rem;color:var(--text-muted);margin-bottom:0.3rem">المبلغ المطلوب</div>
+              <div style="font-size:1.4rem;font-weight:900;color:var(--primary)">{{ price|int }} ج</div>
+            </div>
+          </div>
+        </div>
+        {% else %}
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">اختر الباقة</h3>
+        {% if item_type == 'term' %}
+        <div class="alert alert-info mb-3" style="font-size:0.88rem">
+          🎓 شراء الفصل يمنحك الوصول الفوري لجميع وحداته ({{ term_unit_count or '?' }} وحدة)
+        </div>
+        {% endif %}
+        <div class="tier-pricing">
+          <div class="tier-card bronze-card {% if tier == 'bronze' %}selected{% endif %}"
+               data-tier="bronze" data-price="{{ item['bronze_price']|int }}">
+            <div class="tier-icon">🥉</div>
+            <div class="tier-name" style="color:var(--bronze)">برونز</div>
+            <div class="tier-price" style="color:var(--bronze)">{{ item['bronze_price']|int }} <small style="font-size:1rem">ج</small></div>
+            <ul class="tier-features">
+              <li class="has">🎥 مقاطع الفيديو</li>
+              <li>📝 التمارين</li>
+              <li>📋 الملخص</li>
+            </ul>
+          </div>
+          <div class="tier-card silver-card {% if tier == 'silver' %}selected{% endif %}"
+               data-tier="silver" data-price="{{ item['silver_price']|int }}">
+            <div class="tier-icon">🥈</div>
+            <div class="tier-name" style="color:var(--silver)">فضي</div>
+            <div class="tier-price" style="color:var(--silver)">{{ item['silver_price']|int }} <small style="font-size:1rem">ج</small></div>
+            <ul class="tier-features">
+              <li class="has">🎥 مقاطع الفيديو</li>
+              <li class="has">📝 التمارين</li>
+              <li>📋 الملخص</li>
+            </ul>
+          </div>
+          <div class="tier-card gold-card {% if tier == 'gold' %}selected{% endif %}"
+               data-tier="gold" data-price="{{ item['gold_price']|int }}">
+            <div style="position:absolute;top:-10px;right:50%;transform:translateX(50%)">
+              <span class="badge" style="background:var(--gold);color:#000">الأفضل</span>
+            </div>
+            <div class="tier-icon">🥇</div>
+            <div class="tier-name" style="color:var(--gold)">ذهبي</div>
+            <div class="tier-price" style="color:var(--gold)">{{ item['gold_price']|int }} <small style="font-size:1rem">ج</small></div>
+            <ul class="tier-features">
+              <li class="has">🎥 مقاطع الفيديو</li>
+              <li class="has">📝 التمارين</li>
+              <li class="has">📋 الملخص</li>
+            </ul>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card mb-3">
+      <div class="card-body">
+        <h3 style="margin-bottom:1rem;font-size:1.1rem">تعليمات الدفع عبر Instapay</h3>
+        <div style="background:var(--bg-card2);border-radius:var(--radius);padding:1.25rem;margin-bottom:1rem">
+          <p style="font-size:0.9rem;color:var(--text-muted);margin-bottom:0.5rem">خطوات الدفع:</p>
+          <ol style="margin-right:1.25rem;color:var(--text-muted);font-size:0.9rem;line-height:2">
+            <li>افتح تطبيق Instapay على هاتفك</li>
+            <li>أرسل المبلغ المطلوب إلى الرقم التالي</li>
+            <li>خذ سكرين شوت لإيصال الدفع</li>
+            <li>ارفع الصورة في الحقل أدناه</li>
+            <li>ينصح بالدفع من خلال الرقم الموجود في الحساب</li>
+          </ol>
+        </div>
+        {% if not is_upgrade %}
+        <div class="alert alert-warning mt-2">
+          ⏳ صلاحية الوصول إلى المحتوى سنة كاملة من تاريخ تفعيل الاشتراك
+        </div>
+        {% endif %}
+        <div class="instapay-box">
+          <p style="color:var(--text-muted);font-size:0.9rem">رقم Instapay</p>
+          <div class="instapay-number" dir="ltr" onclick="copyText('{{ instapay }}')">{{ instapay }}</div>
+          <button onclick="copyText('{{ instapay }}')" class="btn btn-outline btn-sm">📋 نسخ الرقم</button>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.75rem">
+            المبلغ: <strong id="checkout-price" style="color:var(--primary)">{{ price|int }} جنيه</strong>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <form method="POST" enctype="multipart/form-data" id="checkout-form" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="tier" value="{{ tier }}" />
+      <div class="card">
+        <div class="card-body">
+          <h3 style="margin-bottom:1rem;font-size:1.1rem">ارفع إيصال الدفع</h3>
+          <div class="upload-area">
+            <input type="file" name="screenshot" accept="image/*" required />
+            <div class="upload-icon">📸</div>
+            <div class="upload-text">
+              <strong>انقر لاختيار صورة</strong> أو اسحب وأفلت<br>
+              <span style="font-size:0.8rem">PNG, JPG, JPEG, GIF</span>
+            </div>
+          </div>
+          <div class="alert alert-info mt-3">
+            ℹ️ سيتم مراجعة طلبك خلال 24 ساعة وإشعارك بالموافقة أو الرفض
+          </div>
+          <button type="submit" class="btn btn-primary btn-block btn-lg mt-3">إرسال طلب الدفع</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

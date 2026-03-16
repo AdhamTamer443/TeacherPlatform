@@ -1,0 +1,102 @@
+{% extends 'admin/base.html' %}
+{% block title %}إدارة الوحدات{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <h1 style="font-size:1.4rem;font-weight:900">📖 إدارة الوحدات</h1>
+  <a href="{{ url_for('admin.unit_create') }}" class="btn btn-primary">+ إضافة وحدة</a>
+</div>
+
+<!-- Filter bar: by grade, then by term -->
+<div class="d-flex gap-2 mb-3" style="flex-wrap:wrap;align-items:center">
+  <a href="{{ url_for('admin.units') }}"
+     class="btn btn-sm {% if not request.args.get('grade') and not request.args.get('term') %}btn-primary{% else %}btn-outline{% endif %}">
+    الكل
+  </a>
+  {% for grade in grades %}
+  <a href="{{ url_for('admin.units') }}?grade={{ grade['id'] }}"
+     class="btn btn-sm {% if request.args.get('grade')|string == grade['id']|string and not request.args.get('term') %}btn-primary{% else %}btn-outline{% endif %}">
+    {{ grade['title'] }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Term sub-filter (shown when a grade is selected) -->
+{% if request.args.get('grade') %}
+{% set gid = request.args.get('grade')|int %}
+{% set grade_terms = all_terms | selectattr('grade_id', 'equalto', gid) | list %}
+{% if grade_terms %}
+<div class="d-flex gap-2 mb-3" style="flex-wrap:wrap;padding-right:1rem;border-right:2px solid var(--border)">
+  <span style="color:var(--text-muted);font-size:0.85rem;align-self:center">فصل:</span>
+  {% for term in grade_terms %}
+  <a href="{{ url_for('admin.units') }}?term={{ term['id'] }}"
+     class="btn btn-sm {% if request.args.get('term')|string == term['id']|string %}btn-primary{% else %}btn-outline{% endif %}"
+     style="font-size:0.82rem">
+    {{ term['title'] }}
+  </a>
+  {% endfor %}
+</div>
+{% endif %}
+{% endif %}
+
+<div class="card">
+  <div class="table-wrap">
+    {% if units %}
+    <table>
+      <thead>
+        <tr>
+          <th>#</th><th>الصورة</th><th>الاسم</th><th>الصف / الفصل</th><th>الدروس</th><th>الأسعار</th><th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for unit in units %}
+        <tr>
+          <td>{{ unit['id'] }}</td>
+          <td>
+            {% if unit['thumbnail'] %}
+            <img src="{{ url_for('static', filename='uploads/' + unit['thumbnail']) }}"
+                 style="width:48px;height:36px;object-fit:cover;border-radius:6px" />
+            {% else %}<span class="text-muted">—</span>{% endif %}
+          </td>
+          <td><strong>{{ unit['title'] }}</strong></td>
+          <td>
+            <span class="badge badge-info" style="display:block;margin-bottom:0.25rem">{{ unit['grade_title'] }}</span>
+            {% if unit['term_title'] %}
+            <span class="badge badge-muted" style="font-size:0.72rem">{{ unit['term_title'] }}</span>
+            {% else %}
+            <span style="font-size:0.75rem;color:var(--text-muted)">بدون فصل</span>
+            {% endif %}
+          </td>
+          <td>
+            <a href="{{ url_for('admin.lessons', uid=unit['id']) }}" class="badge badge-muted">
+              {{ lesson_counts[unit['id']] }} درس
+            </a>
+          </td>
+          <td class="fs-sm">
+            <span class="tier-badge tier-bronze">{{ unit['bronze_price']|int }} ج</span>
+            <span class="tier-badge tier-silver">{{ unit['silver_price']|int }} ج</span>
+            <span class="tier-badge tier-gold">{{ unit['gold_price']|int }} ج</span>
+          </td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('admin.lessons', uid=unit['id']) }}" class="btn btn-outline btn-sm">📝 دروس</a>
+              <a href="{{ url_for('admin.unit_edit', uid=unit['id']) }}" class="btn btn-outline btn-sm">✏️</a>
+              <form method="POST" action="{{ url_for('admin.unit_delete', uid=unit['id']) }}"
+                    onsubmit="return confirm('حذف هذه الوحدة وجميع دروسها؟')">
+                <button class="btn btn-danger btn-sm" type="submit">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center" style="padding:3rem">
+      <p class="text-muted">لا توجد وحدات بعد</p>
+      <a href="{{ url_for('admin.unit_create') }}" class="btn btn-primary mt-2">إضافة أول وحدة</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

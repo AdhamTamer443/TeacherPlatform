@@ -1,0 +1,78 @@
+{% extends 'base.html' %}
+{% block title %}إنشاء حساب — خادم الفصحى{% endblock %}
+{% block description%}قم بإنشاء حساب في منصة خادم الفصحى للأستاذ جمال السيد. وابدأ رحلة تعلمك للغة العربية بطريقة فريدة. {% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<div class="auth-page" style="padding:2rem 1rem">
+  <div class="auth-card" style="max-width:520px">
+    <div class="auth-logo">
+      <img src="{{ url_for('static', filename='logo.png') }}" alt="خادم الفصحى" class="site-logo-img" style="margin: 0 auto 1rem" />
+      <h2 class="auth-title">إنشاء حساب جديد</h2>
+      <p class="auth-subtitle">ابدأ رحلة التعلم من هنا</p>
+    </div>
+
+    <form method="POST" novalidate>
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="form-group">
+        <label class="form-label required">الاسم الكامل باللغة العربية</label>
+        <input type="text" name="name" class="form-control"
+               placeholder="أدخل اسمك الكامل باللغة العربية"
+               value="{{ form_data.get('name', '') }}" required />
+      </div>
+      <div class="form-group">
+        <label class="form-label required">رقم الهاتف</label>
+        <input type="tel" name="phone" class="form-control"
+               placeholder="01xxxxxxxxx"
+               value="{{ form_data.get('phone', '') }}" required
+               dir="ltr" style="text-align:right" />
+        <div class="form-hint">رقم هاتف مصري (01x xxxxxxxxxx)</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">البريد الإلكتروني(اختياري)</label>
+        <input type="email" name="email" class="form-control"
+               placeholder="example@email.com"
+               value="{{ form_data.get('email', '') }}"
+               dir="ltr" style="text-align:right" />
+      </div>
+      <div class="form-group">
+        <label class="form-label required">كلمة المرور</label>
+        <div style="position:relative">
+          <input type="password" name="password" id="pass1" class="form-control"
+                 placeholder="كلمة المرور" required style="padding-left:3rem" />
+          <button type="button" class="password-toggle" data-target="pass1"
+                  style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer">👁️</button>
+        </div>
+        <div class="form-hint">يجب أن تحتوي كلمة المرور على 8 أحرف على الأقل</div>
+      </div>
+      <div class="form-group">
+        <label class="form-label required">تأكيد كلمة المرور</label>
+        <div style="position:relative">
+          <input type="password" name="password2" id="pass2" class="form-control"
+                 placeholder="أعد كتابة كلمة المرور" required style="padding-left:3rem" />
+          <button type="button" class="password-toggle" data-target="pass2"
+                  style="position:absolute;left:0.75rem;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer">👁️</button>
+        </div>
+        <small style="color:var(--secondary)">احفظ كلمة المرور جيدََا. إذا نسيتها، لن تتمكن من الوصول لحسابك</small>
+      </div>
+
+
+      <button type="submit" class="btn btn-primary btn-block btn-lg">إنشاء الحساب</button>
+
+      <p class="text-center fs-sm text-muted" style="margin-bottom:0.75rem">
+        بالتسجيل، أنت توافق على
+        <a href="{{ url_for('main.terms_of_use') }}" class="text-primary">شروط الاستخدام</a>
+        و
+        <a href="{{ url_for('main.privacy') }}" class="text-primary">سياسة الخصوصية</a>
+      </p>      
+      
+      <div class="divider"></div>
+
+      <p class="text-center fs-sm text-muted">
+        لديك حساب بالفعل؟
+        <a href="{{ url_for('auth.login') }}" class="text-primary fw-bold">تسجيل الدخول</a>
+      </p>
+    </form>
+  </div>
+</div>
+{% endblock %}

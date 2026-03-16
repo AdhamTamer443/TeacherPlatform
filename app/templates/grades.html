@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+{% block title %}الصفوف الدراسية — خادم الفصحى{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="container">
+    <div class="breadcrumb">
+      <a href="{{ url_for('main.index') }}">الرئيسية</a>
+      <span>›</span>
+      <span>الصفوف الدراسية</span>
+    </div>
+    <h1>الصفوف الدراسية</h1>
+    <p>اختر صفك الدراسي وابدأ التعلم الآن</p>
+  </div>
+</div>
+
+<div class="section-sm">
+  <div class="container">
+    {% if grades %}
+    <div class="grid grid-auto">
+      {% for grade in grades %}
+      <a href="{{ url_for('main.grade_detail', grade_id=grade['id']) }}" class="card card-course" style="text-decoration:none">
+        <div class="card-thumb">
+          {% if grade['image'] %}
+            <img src="{{ url_for('static', filename='uploads/' + grade['image']) }}" alt="{{ grade['title'] }}" />
+          {% else %}
+            <div class="card-thumb-placeholder">📚</div>
+          {% endif %}
+          <div class="card-thumb-overlay"><div class="play-icon">▶</div></div>
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">{{ grade['title'] }}</h3>
+          {% if grade['description'] %}<p class="card-text">{{ grade['description'] }}</p>{% endif %}
+          <div class="mt-2 d-flex align-center justify-between">
+            <span class="text-muted fs-sm">{{ term_counts[grade['id']] }} فصل دراسي</span>
+            <span class="text-primary fs-sm">عرض الوحدات ←</span>
+          </div>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center" style="padding:5rem 0">
+      <div style="font-size:4rem;margin-bottom:1rem">📚</div>
+      <h2 style="color:var(--text-muted)">لا توجد صفوف دراسية بعد</h2>
+      <p style="color:var(--text-muted)">سيتم إضافة المحتوى قريباً</p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

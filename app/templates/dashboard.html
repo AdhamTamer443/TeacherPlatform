@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+{% block title %}لوحة الطالب — خادم الفصحى{% endblock %}
+
+{% block content %}
+<div class="section-sm">
+  <div class="container">
+    <div class="dashboard-grid">
+
+      <aside class="sidebar">
+        <div class="sidebar-user">
+          <div class="user-avatar">{{ current_user.name[0] }}</div>
+          <h3 style="font-size:1rem;font-weight:700">{{ current_user.name }}</h3>
+          <p class="text-muted fs-sm">طالب</p>
+          <p class="text-muted fs-sm">رقم الهاتف: {{ current_user.phone }}</p>
+          {% if pending_requests > 0 %}
+          <div class="badge badge-warning mt-1">{{ pending_requests }} طلب دفع قيد المراجعة</div>
+          {% endif %}
+        </div>
+        <ul class="sidebar-menu">
+          <li><a href="{{ url_for('student.dashboard') }}" class="active">🏠 لوحتي</a></li>
+          <li><a href="{{ url_for('main.grades') }}">📚 الكورسات</a></li>
+          <li><a href="{{ url_for('auth.logout') }}">🚪 تسجيل الخروج</a></li>
+          <li style="margin-top:1rem;border-top:1px solid var(--border);padding-top:1rem">
+            <form method="POST" action="{{ url_for('student.delete_account') }}" novalidate
+                  onsubmit="return confirm('هل أنت متأكد؟ سيتم حذف حسابك وجميع بياناتك نهائياً ولا يمكن التراجع.')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <input type="password" name="password" class="form-control" placeholder="كلمة المرور للتأكيد" required
+                     style="margin-bottom:0.5rem;font-size:0.85rem;padding:0.4rem 0.75rem">
+              <button type="submit" style="background:none;border:none;color:var(--danger);cursor:pointer;font-size:0.9rem;padding:0.35rem 0.9rem;width:100%;text-align:right">
+                🗑️ حذف حسابي
+              </button>
+            </form>
+          </li>
+        </ul>
+      </aside>
+
+      <div>
+        <h1 style="font-size:1.6rem;font-weight:900;margin-bottom:2rem">
+          أهلاً، {{ current_user.name.split()[0] }}! 👋
+        </h1>
+
+        <!-- Rejected Payments -->
+        {% if rejected_requests %}
+        <div id="rejected-container" style="margin-bottom:2rem">
+          {% for req in rejected_requests %}
+          <div id="rejection-{{ req['id'] }}" class="alert alert-danger"
+               style="display:flex;align-items:flex-start;justify-content:space-between;gap:1rem;margin-bottom:0.75rem">
+            <div>
+              <strong style="font-size:0.95rem">❌ تم رفض طلب دفعك</strong>
+              <p style="margin:0.3rem 0 0;font-size:0.85rem">
+                {{ req['item_title'] }} —
+                <span class="tier-badge tier-{{ req['tier'] }}" style="font-size:0.72rem">
+                {% if req['tier'] == 'gold' %}🥇 ذهبي{% elif req['tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+              </span>
+              {% if req['is_upgrade'] and req['target_tier'] %}
+              <span style="margin:0 0.2rem;font-size:0.8rem">←</span>
+              <span class="tier-badge tier-{{ req['target_tier'] }}" style="font-size:0.72rem">
+                {% if req['target_tier'] == 'gold' %}🥇 ذهبي{% elif req['target_tier'] == 'silver' %}🥈 فضي{% else %}🥉 برونز{% endif %}
+              </span>
+              {% endif %}
+              </p>
+              {% if req['admin_note'] %}
+              <p style="margin:0.3rem 0 0;font-size:0.82rem;color:var(--text-muted)">السبب: {{ req['admin_note'] }}</p>
+              {% endif %}
+            </div>
+            <button onclick="dismissRejection({{ req['id'] }})"
+                    style="background:none;border:none;cursor:pointer;color:inherit;font-size:1.2rem;line-height:1;flex-shrink:0"
+                    title="حسناً، فهمت">×</button>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        {% if last_lesson %}
+        <div class="card mb-3" style="border-color:var(--primary)">
+          <div class="card-body">
+            <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:0.5rem">▶ تابع من حيث توقفت</h3>
+            <p class="text-muted fs-sm mb-2">{{ last_lesson['unit_title'] }}</p>
+            <h4 style="font-size:1rem;margin-bottom:0.5rem">{{ last_lesson['title'] }}</h4>
+            {% if last_progress %}
+            <div class="progress-bar-wrap mb-2">
+              <div class="progress-bar-fill" style="width:{{ last_progress['watch_percent'] }}%"></div>
+            </div>
+            <p class="fs-sm text-muted mb-2">{{ last_progress['watch_percent']|int }}% مكتمل</p>
+            {% endif %}
+            <a href="{{ url_for('main.lesson', lesson_id=last_lesson['id']) }}" class="btn btn-primary btn-sm">
+              متابعة المشاهدة ▶
+            </a>
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- Purchased Terms -->
+        {% if purchased_terms %}
+        <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">🎓 فصولي المشتراة</h2>
+        <div class="grid grid-auto" style="margin-bottom:2rem">
+          {% for item in purchased_terms %}
+          <div class="card" style="border:1px solid rgba(78,205,196,0.3)">
+            <div class="card-body">
+              <div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:0.75rem">
+                <div>
+                  <h3 class="card-title mb-0" style="font-size:0.95rem">{{ item['term']['title'] }}</h3>
+                  <p style="font-size:0.82rem;color:var(--text-muted);margin-top:0.25rem">{{ item['term']['grade_title'] }}</p>
+                </div>
+                <span class="tier-badge tier-{{ item['tier'] }}" style="font-size:0.72rem;flex-shrink:0">
+                  {% if item['tier'] == 'gold' %}🥇{% elif item['tier'] == 'silver' %}🥈{% else %}🥉{% endif %}
+                </span>
+              </div>
+              <p class="fs-sm text-muted mb-2">{{ item['unit_count'] }} وحدة دراسية</p>
+              <a href="{{ url_for('main.term_detail', grade_id=item['term']['grade_id'], term_id=item['term']['id']) }}"
+                 class="btn btn-primary btn-sm" style="width:100%">فتح الفصل ▶</a>
+              {% if item['tier'] != 'gold' %}
+              <div style="margin-top:0.5rem">
+                {% if item['pending_upgrade'] %}
+                <span class="badge badge-warning" style="width:100%;display:block;text-align:center;padding:0.4rem">⏳ طلب ترقية قيد المراجعة</span>
+                {% else %}
+                  {% if item['tier'] == 'bronze' %}
+                  <a href="{{ url_for('payment.checkout', item_type='term', item_id=item['term']['id'], upgrade=1, target_tier='silver') }}"
+                     class="btn btn-silver btn-sm" style="width:100%;margin-bottom:0.35rem">⬆ ترقية إلى فضي — {{ (item['term']['silver_price'] - item['term']['bronze_price'])|int }} ج</a>
+                  <a href="{{ url_for('payment.checkout', item_type='term', item_id=item['term']['id'], upgrade=1, target_tier='gold') }}"
+                     class="btn btn-gold btn-sm" style="width:100%">⬆ ترقية إلى ذهبي — {{ (item['term']['gold_price'] - item['term']['bronze_price'])|int }} ج</a>
+                  {% elif item['tier'] == 'silver' %}
+                  <a href="{{ url_for('payment.checkout', item_type='term', item_id=item['term']['id'], upgrade=1, target_tier='gold') }}"
+                     class="btn btn-gold btn-sm" style="width:100%">⬆ ترقية إلى ذهبي — {{ (item['term']['gold_price'] - item['term']['silver_price'])|int }} ج</a>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+
+        <!-- Purchased Units -->
+        <h2 style="font-size:1.2rem;font-weight:700;margin-bottom:1rem">📖 وحداتي المشتراة</h2>
+
+        {% if purchased_units %}
+        <div class="grid grid-auto" style="margin-bottom:1.5rem">
+          {% for item in purchased_units %}
+          <div class="card">
+            <div class="card-thumb">
+              {% if item['unit']['thumbnail'] %}
+                <img src="{{ url_for('static', filename='uploads/' + item['unit']['thumbnail']) }}" alt="{{ item['unit']['title'] }}" />
+              {% else %}
+                <div class="card-thumb-placeholder">📖</div>
+              {% endif %}
+            </div>
+            <div class="card-body">
+              <div class="d-flex align-center justify-between mb-1">
+                <h3 class="card-title mb-0">{{ item['unit']['title'] }}</h3>
+                <span class="tier-badge tier-{{ item['tier'] }}">
+                  {% if item['tier'] == 'gold' %}🥇{% elif item['tier'] == 'silver' %}🥈{% else %}🥉{% endif %}
+                </span>
+              </div>
+              <p class="card-text">{{ item['unit']['grade_title'] }}</p>
+              {% if item['unit']['term_title'] %}
+              <p class="fs-sm text-muted" style="margin-bottom:0.25rem">{{ item['unit']['term_title'] }}</p>
+              {% endif %}
+              <p class="fs-sm text-muted">{{ item['lesson_count'] }} درس</p>
+              <a href="{{ url_for('main.unit_detail', unit_id=item['unit']['id']) }}"
+                 class="btn btn-primary btn-sm mt-2">فتح الوحدة</a>
+              {% if item['tier'] != 'gold' %}
+              <div style="margin-top:0.5rem">
+                {% if item['pending_upgrade'] %}
+                <span class="badge badge-warning" style="width:100%;display:block;text-align:center;padding:0.4rem">⏳ طلب ترقية قيد المراجعة</span>
+                {% else %}
+                  {% if item['tier'] == 'bronze' %}
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=item['unit']['id'], upgrade=1, target_tier='silver') }}"
+                     class="btn btn-silver btn-sm mt-1" style="width:100%;margin-bottom:0.35rem">⬆ ترقية إلى فضي — {{ (item['unit']['silver_price'] - item['unit']['bronze_price'])|int }} ج</a>
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=item['unit']['id'], upgrade=1, target_tier='gold') }}"
+                     class="btn btn-gold btn-sm" style="width:100%">⬆ ترقية إلى ذهبي — {{ (item['unit']['gold_price'] - item['unit']['bronze_price'])|int }} ج</a>
+                  {% elif item['tier'] == 'silver' %}
+                  <a href="{{ url_for('payment.checkout', item_type='unit', item_id=item['unit']['id'], upgrade=1, target_tier='gold') }}"
+                     class="btn btn-gold btn-sm mt-1" style="width:100%">⬆ ترقية إلى ذهبي — {{ (item['unit']['gold_price'] - item['unit']['silver_price'])|int }} ج</a>
+                  {% endif %}
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+
+        {% elif not purchased_terms %}
+        <div class="card">
+          <div class="card-body text-center" style="padding:3rem">
+            <div style="font-size:3rem;margin-bottom:1rem">📚</div>
+            <h3 style="margin-bottom:0.5rem">لا توجد كورسات بعد</h3>
+            <p class="text-muted mb-3">ابدأ رحلتك التعليمية بشراء أول كورس</p>
+            <a href="{{ url_for('main.grades') }}" class="btn btn-primary">تصفح الكورسات</a>
+          </div>
+        </div>
+        {% else %}
+        <p class="text-muted fs-sm">لا توجد وحدات مشتراة بشكل منفصل</p>
+        {% endif %}
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function dismissRejection(id) {
+  fetch('/student/dismiss-rejection/' + id, {
+    method: 'POST',
+    headers: { 'X-CSRFToken': '{{ csrf_token() }}' }
+  });
+  var el = document.getElementById('rejection-' + id);
+  el.style.transition = 'opacity 0.3s';
+  el.style.opacity = '0';
+  setTimeout(function() {
+    el.remove();
+    var container = document.getElementById('rejected-container');
+    if (container && container.querySelectorAll('[id^=rejection-]').length === 0) container.remove();
+  }, 300);
+}
+</script>
+{% endblock %}

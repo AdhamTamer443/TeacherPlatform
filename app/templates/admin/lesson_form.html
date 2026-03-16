@@ -1,0 +1,112 @@
+{% extends 'admin/base.html' %}
+{% block title %}{% if action == 'create' %}إضافة درس{% else %}تعديل درس{% endif %}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <div>
+    <div class="breadcrumb" style="margin-bottom:0.5rem">
+      <a href="{{ url_for('admin.units') }}">الوحدات</a>
+      <span>›</span>
+      <a href="{{ url_for('admin.lessons', uid=unit['id']) }}">{{ unit['title'] }}</a>
+      <span>›</span>
+      <span>{% if action == 'create' %}درس جديد{% else %}تعديل{% endif %}</span>
+    </div>
+    <h1 style="font-size:1.4rem;font-weight:900">
+      {% if action == 'create' %}➕ إضافة درس جديد{% else %}✏️ تعديل الدرس{% endif %}
+    </h1>
+  </div>
+  <a href="{{ url_for('admin.lessons', uid=unit['id']) }}" class="btn btn-outline">← رجوع</a>
+</div>
+
+<div class="card">
+  <div class="card-body">
+    <form method="POST" enctype="multipart/form-data">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1.5rem">
+        <div>
+          <div class="form-group">
+            <label class="form-label">عنوان الدرس <span style="color:var(--danger)">*</span></label>
+            <input type="text" name="title" class="form-control"
+                   value="{{ lesson['title'] if lesson else '' }}" required />
+          </div>
+          <div class="form-group">
+            <label class="form-label">وصف الدرس</label>
+            <textarea name="description" class="form-control">{{ lesson['description'] if lesson else '' }}</textarea>
+          </div>
+          <div class="form-group">
+            <label class="form-label">رابط فيديو يوتيوب</label>
+            <input type="url" name="video_url" class="form-control" dir="ltr" style="text-align:right"
+                   placeholder="https://www.youtube.com/watch?v=..."
+                   value="{{ lesson['video_url'] if lesson else '' }}" />
+            <div class="form-hint">رابط الفيديو من يوتيوب (watch أو youtu.be)</div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+            <div class="form-group">
+              <label class="form-label">ترتيب العرض</label>
+              <input type="number" name="order_index" class="form-control"
+                     value="{{ lesson['order_index'] if lesson else 0 }}" min="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">المدة (دقيقة)</label>
+              <input type="number" name="duration_minutes" class="form-control"
+                     value="{{ lesson['duration_minutes'] if lesson else 0 }}" min="0" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <div class="form-group">
+            <label class="form-label">
+              <span class="tier-badge tier-silver">🥈 فضي</span> تمرين سهل (PDF)
+            </label>
+            {% if lesson and lesson['exercise_easy_pdf'] %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson['exercise_easy_pdf']) }}"
+               target="_blank" class="badge badge-info mb-1" style="display:inline-block">📄 الملف الحالي</a>
+            {% endif %}
+            <div class="upload-area">
+              <input type="file" name="exercise_easy_pdf" accept=".pdf" />
+              <div class="upload-icon" style="font-size:1.5rem">📄</div>
+              <div class="upload-text"><strong>ارفع PDF</strong></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span class="tier-badge tier-silver">🥈 فضي</span> تمرين صعب (PDF)
+            </label>
+            {% if lesson and lesson['exercise_hard_pdf'] %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson['exercise_hard_pdf']) }}"
+               target="_blank" class="badge badge-info mb-1" style="display:inline-block">📄 الملف الحالي</a>
+            {% endif %}
+            <div class="upload-area">
+              <input type="file" name="exercise_hard_pdf" accept=".pdf" />
+              <div class="upload-icon" style="font-size:1.5rem">📄</div>
+              <div class="upload-text"><strong>ارفع PDF</strong></div>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">
+              <span class="tier-badge tier-gold">🥇 ذهبي</span> الملخص (PDF)
+            </label>
+            {% if lesson and lesson['brief_pdf'] %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson['brief_pdf']) }}"
+               target="_blank" class="badge badge-warning mb-1" style="display:inline-block">📋 الملف الحالي</a>
+            {% endif %}
+            <div class="upload-area">
+              <input type="file" name="brief_pdf" accept=".pdf" />
+              <div class="upload-icon" style="font-size:1.5rem">📋</div>
+              <div class="upload-text"><strong>ارفع PDF</strong></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary btn-lg">
+          {% if action == 'create' %}إضافة الدرس{% else %}حفظ التعديلات{% endif %}
+        </button>
+        <a href="{{ url_for('admin.lessons', uid=unit['id']) }}" class="btn btn-outline btn-lg">إلغاء</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

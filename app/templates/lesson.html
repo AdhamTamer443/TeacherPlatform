@@ -1,0 +1,160 @@
+{% extends 'base.html' %}
+{% block title %}{{ lesson['title'] }} — خادم الفصحى{% endblock %}
+
+{% block head %}
+<script src="https://www.youtube.com/iframe_api"></script>
+{% endblock %}
+
+{% block content %}
+<div style="background:var(--bg-card);border-bottom:1px solid var(--border);padding:0.75rem 0">
+  <div class="container">
+    <div class="breadcrumb" style="margin:0">
+      <a href="{{ url_for('main.index') }}">الرئيسية</a>
+      <span>›</span>
+      <a href="{{ url_for('main.grade_detail', grade_id=lesson['grade_id']) }}">{{ grade['title'] }}</a>
+      {% if lesson['term_id'] %}
+      <span>›</span>
+      <a href="{{ url_for('main.term_detail', grade_id=lesson['grade_id'], term_id=lesson['term_id']) }}">{{ lesson['term_title'] }}</a>
+      {% endif %}
+      <span>›</span>
+      <a href="{{ url_for('main.unit_detail', unit_id=lesson['unit_id']) }}">{{ lesson['unit_title'] }}</a>
+      <span>›</span>
+      <span>{{ lesson['title'] }}</span>
+    </div>
+  </div>
+</div>
+
+<div class="section-sm">
+  <div class="container">
+    <div class="lesson-layout">
+
+      <!-- Main Content -->
+      <div>
+        <div class="video-player mb-3">
+          {% if lesson['video_url'] %}
+            <iframe id="yt-player"
+                    src="{{ embed_url }}"
+                    data-lesson-id="{{ lesson['id'] }}"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowfullscreen></iframe>
+          {% else %}
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg-card2)">
+              <p class="text-muted">لم يتم رفع الفيديو بعد</p>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if progress %}
+        <div class="mb-3">
+          <div class="d-flex align-center justify-between mb-1">
+            <span class="fs-sm text-muted">تقدم المشاهدة</span>
+            <span id="completion-badge" class="badge {% if progress['completed'] %}badge-success{% else %}badge-muted{% endif %}">
+              {% if progress['completed'] %}✓ مكتمل{% else %}{{ progress['watch_percent']|int }}%{% endif %}
+            </span>
+          </div>
+          <div class="progress-bar-wrap">
+            <div id="progress-bar" class="progress-bar-fill" style="width:{{ progress['watch_percent'] }}%"></div>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="card mb-3">
+          <div class="card-body">
+            <h1 style="font-size:1.4rem;font-weight:800;margin-bottom:0.5rem">{{ lesson['title'] }}</h1>
+            {% if lesson['description'] %}
+              <p class="text-muted">{{ lesson['description'] }}</p>
+            {% endif %}
+
+            {% if access_tier in ['silver', 'gold'] or current_user.is_admin %}
+            <div class="divider"></div>
+            <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">📥 التمارين</h3>
+            {% if lesson['exercise_easy_pdf'] %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson['exercise_easy_pdf']) }}" download class="download-btn">
+              <div class="download-icon">📄</div>
+              <div><div style="font-weight:600">تمرين سهل</div><div class="fs-sm text-muted">PDF</div></div>
+              <span style="margin-right:auto;color:var(--primary)">⬇</span>
+            </a>
+            {% endif %}
+            {% if lesson['exercise_hard_pdf'] %}
+            <a href="{{ url_for('static', filename='uploads/' + lesson['exercise_hard_pdf']) }}" download class="download-btn">
+              <div class="download-icon">📄</div>
+              <div><div style="font-weight:600">تمرين صعب</div><div class="fs-sm text-muted">PDF</div></div>
+              <span style="margin-right:auto;color:var(--primary)">⬇</span>
+            </a>
+            {% endif %}
+            {% endif %}
+
+            {% if access_tier == 'gold' or current_user.is_admin %}
+            {% if lesson['brief_pdf'] %}
+            <div class="divider"></div>
+            <h3 style="font-size:1rem;font-weight:700;margin-bottom:0.75rem">📋 الملخص</h3>
+            <a href="{{ url_for('static', filename='uploads/' + lesson['brief_pdf']) }}" download class="download-btn">
+              <div class="download-icon" style="background:rgba(244,200,66,0.1)">📋</div>
+              <div><div style="font-weight:600">الملخص الذهبي</div><div class="fs-sm text-muted">PDF</div></div>
+              <span style="margin-right:auto;color:var(--gold)">⬇</span>
+            </a>
+            {% endif %}
+            {% endif %}
+
+            {% if not current_user.is_admin %}
+            {% if not access_tier %}
+            <div class="alert alert-warning mt-2">🔒 اشترِ هذه الوحدة للوصول إلى التمارين والملخصات</div>
+            {% elif access_tier == 'bronze' %}
+            <div class="alert alert-info mt-2">💡 تحتاج إلى الباقة الفضية أو الذهبية للحصول على التمارين والملخصات</div>
+            {% elif access_tier == 'silver' %}
+            <div class="alert alert-info mt-2">💡 تحتاج إلى الباقة الذهبية للحصول على الملخص الاحترافي</div>
+            {% endif %}
+            {% endif %}
+          </div>
+        </div>
+
+        <div class="d-flex justify-between gap-2 lesson-nav-btns">
+          {% if prev_lesson %}
+          <a href="{{ url_for('main.lesson', lesson_id=prev_lesson['id']) }}" class="btn btn-outline">→ الدرس السابق</a>
+          {% else %}<div></div>{% endif %}
+          {% if next_lesson %}
+          <a id="next-lesson-btn" href="{{ url_for('main.lesson', lesson_id=next_lesson['id']) }}"
+             class="btn btn-primary"
+             {% if progress and not progress['completed'] %}style="opacity:0.5;pointer-events:none"{% endif %}>
+            الدرس التالي ←
+          </a>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Lesson Sidebar -->
+      <div>
+        <button class="lesson-list-toggle" id="lesson-list-toggle">
+          <span>📋 قائمة الدروس — {{ lesson['unit_title'] }}</span>
+          <span class="toggle-arrow">▼</span>
+        </button>
+        <div class="lesson-sidebar">
+          <div class="lesson-sidebar-header">
+            <div style="font-size:0.88rem;color:var(--text-muted)">{{ lesson['unit_title'] }}</div>
+            <div>قائمة الدروس</div>
+          </div>
+          <div class="lesson-sidebar-body open" id="lesson-sidebar-body">
+            {% for l in lessons_ordered %}
+            <a href="{{ url_for('main.lesson', lesson_id=l['id']) }}"
+               class="lesson-item {% if l['id'] == lesson['id'] %}active{% endif %}">
+              <div class="lesson-num">{{ loop.index }}</div>
+              <div class="lesson-info">
+                <div class="title">{{ l['title'] }}</div>
+                {% if l['duration_minutes'] %}<div class="duration">{{ l['duration_minutes'] }} دقيقة</div>{% endif %}
+              </div>
+            </a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// YouTube tracking handled in main.js via window.onYouTubeIframeAPIReady
+</script>
+{% endblock %}

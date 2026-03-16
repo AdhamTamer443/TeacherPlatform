@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}لوحة التحكم{% endblock %} — خادم الفصحى</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+</head>
+<body>
+
+<div class="admin-layout">
+
+  <!-- Admin Sidebar -->
+  <aside class="admin-sidebar">
+    <div style="padding:0.5rem 1rem 1.5rem;border-bottom:1px solid var(--border);margin-bottom:1rem">
+      <a href="{{ url_for('main.index') }}" class="navbar-brand" style="text-decoration:none;color:var(--text)">
+        <img src="{{ url_for('static', filename='logo.png') }}" alt="خادم الفصحى" class="site-logo-img site-logo-sm" />
+      </a>
+      <div class="badge badge-info mt-2" style="font-size:0.7rem">لوحة الإدارة</div>
+    </div>
+
+    <ul class="admin-menu">
+      <li class="admin-menu-section">الرئيسية</li>
+      <li><a href="{{ url_for('admin.dashboard') }}" {% if request.endpoint == 'admin.dashboard' %}class="active"{% endif %}>🏠 الإحصائيات</a></li>
+
+      <li class="admin-menu-section">المحتوى</li>
+      <li><a href="{{ url_for('admin.grades') }}" {% if request.endpoint in ['admin.grades','admin.grade_create','admin.grade_edit'] %}class="active"{% endif %}>📚 الصفوف</a></li>
+      <li><a href="{{ url_for('admin.grades') }}" {% if 'term' in request.endpoint %}class="active"{% endif %} style="padding-right:2rem">📅 الفصول الدراسية</a></li>
+      <li><a href="{{ url_for('admin.units') }}" {% if 'unit' in request.endpoint and 'term' not in request.endpoint %}class="active"{% endif %} style="padding-right:2rem">📖 الوحدات</a></li>
+
+      <li class="admin-menu-section">الطلاب</li>
+      <li><a href="{{ url_for('admin.students') }}" {% if 'student' in request.endpoint %}class="active"{% endif %}>👥 الطلاب</a></li>
+      <li>
+        <a href="{{ url_for('admin.payments') }}" {% if 'payment' in request.endpoint %}class="active"{% endif %}>
+          💳 طلبات الدفع
+        </a>
+      </li>
+
+      <li class="admin-menu-section">الحساب</li>
+      <li><a href="{{ url_for('main.index') }}">🌐 الموقع</a></li>
+      <li><a href="{{ url_for('auth.logout') }}">🚪 تسجيل الخروج</a></li>
+
+      <li style="margin-top:1rem;padding-top:1rem;border-top:1px solid var(--border)">
+        <button class="theme-toggle theme-toggle-admin" id="theme-toggle-admin" aria-label="تبديل المظهر" style="width:100%;justify-content:flex-start;padding:0.7rem 1rem;border-radius:10px;background:none;border:none;cursor:pointer;color:var(--text-muted);font-family:var(--font-main);font-size:0.93rem;font-weight:500;display:flex;align-items:center;gap:0.75rem;transition:all 0.25s">
+          <span class="theme-icon-sun">☀️</span>
+          <span class="theme-icon-moon">🌙</span>
+          <span class="theme-toggle-label"></span>
+        </button>
+      </li>
+    </ul>
+  </aside>
+
+  <!-- Admin Main -->
+  <div class="admin-main">
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for cat, msg in messages %}
+      <div class="alert alert-{{ cat }} mb-3">{{ msg }}</div>
+      {% endfor %}
+    {% endif %}
+    {% endwith %}
+
+    {% block admin_content %}{% endblock %}
+  </div>
+
+</div>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

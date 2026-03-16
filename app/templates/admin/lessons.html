@@ -1,0 +1,63 @@
+{% extends 'admin/base.html' %}
+{% block title %}دروس {{ unit['title'] }}{% endblock %}
+
+{% block admin_content %}
+<div class="d-flex align-center justify-between mb-4">
+  <div>
+    <div class="breadcrumb" style="margin-bottom:0.5rem">
+      <a href="{{ url_for('admin.units') }}">الوحدات</a>
+      <span>›</span>
+      <span>{{ unit['grade_title'] }}</span>
+      {% if unit['term_title'] %}
+      <span>›</span>
+      <span>{{ unit['term_title'] }}</span>
+      {% endif %}
+      <span>›</span>
+      <span>{{ unit['title'] }}</span>
+    </div>
+    <h1 style="font-size:1.4rem;font-weight:900">📝 دروس: {{ unit['title'] }}</h1>
+  </div>
+  <a href="{{ url_for('admin.lesson_create', uid=unit['id']) }}" class="btn btn-primary">+ إضافة درس</a>
+</div>
+
+<div class="card">
+  <div class="table-wrap">
+    {% if lessons %}
+    <table>
+      <thead>
+        <tr>
+          <th>الترتيب</th><th>العنوان</th><th>الفيديو</th><th>تمرين سهل</th><th>تمرين صعب</th><th>الملخص</th><th>المدة</th><th>الإجراءات</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lesson in lessons %}
+        <tr>
+          <td>{{ lesson['order_index'] }}</td>
+          <td><strong>{{ lesson['title'] }}</strong></td>
+          <td>{% if lesson['video_url'] %}<span class="badge badge-success">✓ يوتيوب</span>{% else %}<span class="badge badge-muted">—</span>{% endif %}</td>
+          <td>{% if lesson['exercise_easy_pdf'] %}<span class="badge badge-info">✓ PDF</span>{% else %}<span class="badge badge-muted">—</span>{% endif %}</td>
+          <td>{% if lesson['exercise_hard_pdf'] %}<span class="badge badge-info">✓ PDF</span>{% else %}<span class="badge badge-muted">—</span>{% endif %}</td>
+          <td>{% if lesson['brief_pdf'] %}<span class="badge badge-warning">✓ PDF</span>{% else %}<span class="badge badge-muted">—</span>{% endif %}</td>
+          <td>{{ lesson['duration_minutes'] }} د</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="{{ url_for('admin.lesson_edit', lid=lesson['id']) }}" class="btn btn-outline btn-sm">✏️</a>
+              <form method="POST" action="{{ url_for('admin.lesson_delete', lid=lesson['id']) }}" onsubmit="return confirm('حذف هذا الدرس؟')">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn btn-danger btn-sm">🗑️</button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="text-center" style="padding:3rem">
+      <p class="text-muted">لا توجد دروس في هذه الوحدة بعد</p>
+      <a href="{{ url_for('admin.lesson_create', uid=unit['id']) }}" class="btn btn-primary mt-2">إضافة أول درس</a>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
